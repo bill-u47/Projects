@@ -67,7 +67,7 @@ def main():
         except Exception as e:
             print(f"An error occurred: {str(e)}")
     else:
-        print("This script only runs on Wednesdays.")
+        print("This script only runs on Thursdays.")
 
 if __name__ == "__main__":
     main()
