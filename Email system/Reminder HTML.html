@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -94,40 +93,53 @@
     </div>
 
     <script>
-        document.getElementById('reminderForm').addEventListener('submit', function(e) {
+         document.getElementById('reminderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const messageDiv = document.getElementById('message');
+            
+            // Get form values
             const reminderName = document.getElementById('reminderName').value;
             const email = document.getElementById('email').value;
             const reminderDate = document.getElementById('reminderDate').value;
             const reminderTime = document.getElementById('reminderTime').value;
-
-            // Send data to the Flask backend
-            fetch('/set_reminder', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    reminderName,
-                    email,
-                    reminderDate,
-                    reminderTime
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Reminder set successfully! Check your email.');
+            
+            try {
+                const response = await fetch('http://localhost:5000/set_reminder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        reminderName,
+                        email,
+                        reminderDate,
+                        reminderTime
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.className = 'success';
+                    messageDiv.textContent = 'Reminder set successfully!';
+                    // Clear form
+                    e.target.reset();
                 } else {
-                    alert('Failed to set reminder. Please try again.');
+                    messageDiv.className = 'error';
+                    messageDiv.textContent = `Error: ${data.message}`;
                 }
-            })
-            .catch(error => {
+            } catch (error) {
+                messageDiv.className = 'error';
+                messageDiv.textContent = 'Error connecting to server. Please try again.';
                 console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-            });
+            }
         });
+
+        // Set minimum date to today
+        const dateInput = document.getElementById('reminderDate');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
     </script>
 </body>
 </html>
