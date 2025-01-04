@@ -53,6 +53,8 @@ def send_email(
         except:
             pass
 
+
+#Make the html site and then use the user input to determine what the date, reminder contents, etc will be.
 def main():
     if datetime.datetime.today().weekday() == 3:
         try:
