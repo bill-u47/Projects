@@ -78,7 +78,7 @@ def set_reminder():
         reminder_datetime = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
         
         message = f"""
-        Does this work?
+        What's poppin
 
         This is to remind you about {reminder_name}
         This was scheduled for {reminder_date} at {reminder_time}
