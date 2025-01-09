@@ -60,6 +60,23 @@
         button:hover {
             background-color: #45a049;
         }
+
+        #message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
     </style>
 </head>
 <body>
@@ -90,6 +107,7 @@
 
             <button type="submit">Set Reminder</button>
         </form>
+        <div id="message"></div>
     </div>
 
     <script>
@@ -115,7 +133,10 @@
                         email,
                         reminderDate,
                         reminderTime
-                    })
+                    }),
+                    mode: "cors",
+                    credentials:"same-origin"
+
                 });
                 
                 const data = await response.json();
@@ -123,7 +144,7 @@
                 if (response.ok) {
                     messageDiv.className = 'success';
                     messageDiv.textContent = 'Reminder set successfully!';
-                    // Clear form
+                    // Clear the text inputs
                     e.target.reset();
                 } else {
                     messageDiv.className = 'error';

@@ -1,17 +1,21 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import datetime
-import os
-from typing import Optional
-from dotenv.main import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
+import smtplib
+import os
+from typing import Optional
+from dotenv import load_dotenv
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 CORS(app)
-
 load_dotenv()
+
+scheduler = BackgroundScheduler()
+scheduler.start()
+
 def send_email(
     sender_email: str,
     receiver_email: str,
@@ -32,23 +36,14 @@ def send_email(
         msg['From'] = sender_email
         msg['To'] = receiver_email
         msg['Subject'] = subject
-        
         msg.attach(MIMEText(message, 'plain'))
         
         server.login(sender_email, password)
         server.send_message(msg)
-        
-        print(f"Email successfully sent to {receiver_email}")
         return True
         
-    except smtplib.SMTPAuthenticationError:
-        print("Authentication failed. Please check your email and app password.")
-        return False
-    except smtplib.SMTPException as e:
-        print(f"An error occurred while sending the email: {str(e)}")
-        return False
     except Exception as e:
-        print(f"An unexpected error occurred: {str(e)}")
+        print(f"Email error: {str(e)}")
         return False
     finally:
         try:
@@ -58,24 +53,30 @@ def send_email(
 
 @app.route('/set_reminder', methods=['POST'])
 def set_reminder():
-    try:        
+    try:
         data = request.json
-        
-        # Extract data from request
         reminder_name = data.get('reminderName')
         receiver_email = data.get('email')
         reminder_date = data.get('reminderDate')
         reminder_time = data.get('reminderTime')
         
-        # Validate required fields
         if not all([reminder_name, receiver_email, reminder_date, reminder_time]):
             return jsonify({
                 'status': 'error',
                 'message': 'Missing required fields'
             }), 400
-            
-        # Format the reminder message
-        subject = f"Reminder: {reminder_name}"
+
+        sender_email = os.environ.get("SENDER_EMAIL")
+        if not sender_email:
+            return jsonify({
+                'status': 'error',
+                'message': 'Sender email not configured'
+            }), 500
+
+        # Schedule the reminder
+        datetime_str = f"{reminder_date} {reminder_time}"
+        reminder_datetime = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
+        
         message = f"""
         Hello!
 
@@ -85,57 +86,24 @@ def set_reminder():
         Best regards,
         Your Reminder System
         """
-        
-        # Get sender email from environment variables
-        sender_email = os.environ.get("SENDER_EMAIL")
-        if not sender_email:
-            return jsonify({
-                'status': 'error',
-                'message': 'Sender email not configured'
-            }), 500
-            
-        # Send the email
-        success = send_email(
-            sender_email=sender_email,
-            receiver_email=receiver_email,
-            subject=subject,
-            message=message
+
+        scheduler.add_job(
+            send_email,
+            'date',
+            run_date=reminder_datetime,
+            args=[sender_email, receiver_email, f"Reminder: {reminder_name}", message]
         )
-        
-        if success:
-            return jsonify({
-                'status': 'success',
-                'message': 'Reminder set and email sent successfully'
-            }), 200
-        else:
-            return jsonify({
-                'status': 'error',
-                'message': 'Failed to send email'
-            }), 500
-            
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Reminder scheduled successfully'
+        }), 200
+
     except Exception as e:
         return jsonify({
             'status': 'error',
             'message': str(e)
         }), 500
 
-
-#Make the html site and then use the user input to determine what the date, reminder contents, etc will be.
-def main():
-    if datetime.datetime.today().weekday() == 5:
-        try:
-            sender_email = input("SENDER EMAIL: ").strip()
-            receiver_email = input("RECEIVER EMAIL: ").strip()
-            subject = input("SUBJECT: ").strip()
-            message = input("MESSAGE: ").strip()
-            send_email(sender_email, receiver_email, subject, message)
-            
-        except KeyboardInterrupt:
-            print("\nProgram terminated by user.")
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
-    else:
-        print("This script only runs on Thursdays.")
-
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
