@@ -78,13 +78,12 @@ def set_reminder():
         reminder_datetime = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
         
         message = f"""
-        Hello!
+        Does this work?
 
-        This is a reminder for: {reminder_name}
-        Scheduled for: {reminder_date} at {reminder_time}
+        This is to remind you about {reminder_name}
+        This was scheduled for {reminder_date} at {reminder_time}
 
-        Best regards,
-        Your Reminder System
+        This was a message from Andrew's Bot
         """
 
         scheduler.add_job(
