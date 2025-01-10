@@ -59,8 +59,9 @@ def set_reminder():
         receiver_email = data.get('email')
         reminder_date = data.get('reminderDate')
         reminder_time = data.get('reminderTime')
+        reminder_repeat = data.get('reminderRepeat')
         
-        if not all([reminder_name, receiver_email, reminder_date, reminder_time]):
+        if not all([reminder_name, receiver_email, reminder_date, reminder_time, reminder_repeat]):
             return jsonify({
                 'status': 'error',
                 'message': 'Missing required fields'
