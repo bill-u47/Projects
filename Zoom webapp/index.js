@@ -7,7 +7,7 @@ import 'dotenv/config'
     clientId: "LZ_00n7jS5yQngiZHGhTg",
     clientSecret: process.env.CLIENT_SECRET,
     webhooksSecretToken: process.env.WEBHOOK_SECRET_TOKEN,
-    port:1234
+    port:1223
   }); 
 
   chatbotClient.webEventConsumer.onSlashCommand('*', async ({ say, payload }) => {
