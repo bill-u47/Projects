@@ -8,8 +8,7 @@ import os
 from typing import Optional
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-import calendar
+
 
 month = ""
 app = Flask(__name__)
@@ -113,8 +112,8 @@ def set_reminder():
                 'interval',
                 seconds=interval_seconds,
                 start_date=reminder_datetime,
-                args=[sender_email, receiver_email, f"Reminder: {reminder_name}", message]
-            )
+                args=[sender_email, receiver_email, f"Reminder: {reminder_name}", message],
+                )
             response_message = 'Success'
         else:
             # Set up one-time reminder
