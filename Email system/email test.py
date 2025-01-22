@@ -9,7 +9,9 @@ from typing import Optional
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+import calendar
 
+month = ""
 app = Flask(__name__)
 CORS(app)
 load_dotenv()
@@ -54,12 +56,13 @@ def send_email(
 
 def get_interval_seconds(interval, unit):
     unit_conversions = {
-        'hours': 3600,
-        'days': 86400,
-        'weeks': 604800,
-        'months': 2592000  # Approximating a month as 30 days
+        'minute(s)' : 60,
+        'hour(s)': 3600,
+        'day(s)': 86400,
+        'week(s)': 604800,
+        'month(s)': 2592000  #if month is 30 days
     }
-    return int(interval) * unit_conversions.get(unit, 3600)
+    return int(interval) * unit_conversions.get(unit, 60)
 
 @app.route('/set_reminder', methods=['POST'])
 def set_reminder():
@@ -93,6 +96,7 @@ def set_reminder():
 
         you MUST do this: {reminder_name}
         You set this for {reminder_date} at {reminder_time}
+        This repeats every {repeat_data['interval']} {repeat_data['unit']}
 
         This was a message from Andrew's Bot
         """
@@ -111,8 +115,7 @@ def set_reminder():
                 start_date=reminder_datetime,
                 args=[sender_email, receiver_email, f"Reminder: {reminder_name}", message]
             )
-            
-            response_message = f'The repeating reminder is scheduled for {repeat_data["interval"]} {repeat_data["unit"]}'
+            response_message = 'Success'
         else:
             # Set up one-time reminder
             scheduler.add_job(
