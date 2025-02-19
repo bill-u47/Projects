@@ -19,7 +19,8 @@ from typing import Collection, List, Tuple, Union
 month = ""
 app = Flask(__name__)
 CORS(app)
-load_dotenv()
+__file__ = r"C:\Users\User\OneDrive - Regis Jesuit High School\Desktop\Projects\Email system\.env)"
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -33,6 +34,7 @@ carrier_list = {
     "cricket": "sms.cricketwireless.net",
     "uscellular": "email.uscc.net", 
 }
+
 async def send_txt(
     num: Union[str, int], carrier: str, email: str, pword: str, msg: str, subj: str
 ) -> Tuple[dict, str]:
@@ -44,7 +46,8 @@ async def send_txt(
     message["To"] = f"{num}@{to_email}"
     message["Subject"] = subj
     message.set_content(msg)
-
+    email = os.environ.get("SENDER_EMAIL")
+    pword = os.environ.get("phoneCode")
     HOST = 'smtp.gmail.com'
     send_kws = dict(username=email, password=pword, hostname=HOST, port=587, start_tls=True)
     res = await aiosmtplib.send(message, **send_kws) 
@@ -63,19 +66,19 @@ async def send_txts(
 if __name__ == "__main__":
     _num = "7206269971"
     _carrier = "verizon"
-    _email = "bilyeudrew8@gmail.com"
-    _pword = os.environ.get("GMAIL_APP_PASSWORD")
+    _email = os.environ.get("SENDER_EMAIL")
+    _pword = os.environ.get("phoneCode")
     _msg = "rah rah ah ah ah"
     _subj = "Dummy subj"
     coro = send_txt(_num, _carrier, _email, _pword, _msg, _subj)
     asyncio.run(coro)
 
 def send_email(
-    sender_email: str,
     receiver_email: str,
     subject: str,
     message: str,
-    password: Optional[str] = None
+    password: Optional[str] = None,
+    sender_email = str(os.environ.get("SENDER_EMAIL"))
 ):
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -124,6 +127,7 @@ def set_reminder():
         reminder_time = data.get('reminderTime')
         repeat_data = data.get('repeat')
         phoneNum_data = data.get('phoneNumb_data')
+        sender_email = os.environ.get("SENDER_EMAIL")
 
         
         if not all([reminder_name, receiver_email, reminder_date, reminder_time]):
@@ -131,8 +135,6 @@ def set_reminder():
                 'status': 'error',
                 'message': 'Missing required fields'
             }), 400
-
-        sender_email = os.environ.get("SENDER_EMAIL")
         if not sender_email:
             return jsonify({
                 'status': 'error',
@@ -174,7 +176,7 @@ def set_reminder():
                 send_email,
                 'date',
                 run_date=reminder_datetime,
-                args=[sender_email, receiver_email, f"Reminder: {reminder_name}", message]
+                args=[sender_email, receiver_email, phoneNum_data, f"Reminder: {reminder_name}", message]
             )
             
             response_message = 'Successfully made'
