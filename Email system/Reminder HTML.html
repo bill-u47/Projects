@@ -104,7 +104,11 @@
                 <input type="email" id="email" name="email" required 
                        placeholder="Enter your email">
             </div>
-
+            <div class="form-group">
+                <label for="email">Phone Number:</label>
+                <input type="number" id="pnumber" name="pnumber" 
+                       placeholder="Enter your phone number (optional)">
+            </div>
             <div class="form-group">
                 <label for="reminderDate">Date:</label>
                 <input type="date" id="reminderDate" name="reminderDate" required>
@@ -128,7 +132,7 @@
                 <div class="repeat-container">
                     <input type="number" id="repeatInterval" name="repeatInterval" 
                            min="1" value="1" style="width: 80px;">
-                    <select id="repeatUnit" name="repeatUnit"> <!-- here's the dropdown values -->
+                    <select id="repeatUnit" name="repeatUnit">
                         <option value="minute(s)">Minute(s)</option>
                         <option value="hour(s)">Hour(s)</option>
                         <option value="day(s)">Day(s)</option>
@@ -144,7 +148,8 @@
     </div>
 
     <script>
-            //do they want to repeat?
+        updateScreen()
+        function updateScreen() {
             document.getElementById('repeatEnabled').addEventListener('change', function() {
             const repeatOptions = document.getElementById('repeatOptionsContainer');
             if (this.value === 'yes') {
@@ -152,11 +157,12 @@
             } else {
                 repeatOptions.style.display = 'none';
             }
-        });
+            });
+        }
 
         document.getElementById('reminderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+            updateScreen();
             const messageDiv = document.getElementById('message');
             
             //values
@@ -165,10 +171,12 @@
             const reminderDate = document.getElementById('reminderDate').value;
             const reminderTime = document.getElementById('reminderTime').value;
             const repeatEnabled = document.getElementById('repeatEnabled').value;
+            const phoneNumb_data = document.getElementById('pnumber').value;
             
             //if yes, then these are settings
             let repeatData = false;
             if (repeatEnabled === 'yes') {
+                updateScreen();
                 repeatData = {
                     interval: document.getElementById('repeatInterval').value,
                     unit: document.getElementById('repeatUnit').value
@@ -186,7 +194,8 @@
                         email,
                         reminderDate,
                         reminderTime,
-                        repeat: repeatData
+                        repeat: repeatData,
+                        phoneNumb_data
                     }),
                     mode: "cors",
                     credentials: "same-origin"

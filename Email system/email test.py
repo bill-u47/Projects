@@ -5,18 +5,49 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 import smtplib
 import os
-from typing import Optional
+import re
+from typing import Optional, Collection, List, Tuple, Union
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+import aiosmtplib
+import asyncio
+from email.message import EmailMessage
 
-
-month = ""
 app = Flask(__name__)
 CORS(app)
 load_dotenv()
 
 scheduler = BackgroundScheduler()
 scheduler.start()
+
+carrier_list = {
+    "verizon": "vtext.com",
+    "tmobile": "tmomail.net",
+    "sprint": "messaging.sprintpcs.com",
+    "at&t": "txt.att.net",
+    "boost": "smsmyboostmobile.com",
+    "cricket": "sms.cricketwireless.net",
+    "uscellular": "email.uscc.net", 
+}
+
+async def send_txt(
+    num: Union[str, int], carrier: str, email: str, pword: str, msg: str, subj: str
+) -> Tuple[dict, str]:
+    to_email = carrier_list[carrier]
+
+    message = EmailMessage()
+    message["From"] = email
+    message["To"] = f"{num}@{to_email}"
+    message["Subject"] = subj
+    message.set_content(msg)
+
+    HOST = 'smtp.gmail.com'
+    send_kws = dict(username=email, password=pword, hostname=HOST, port=587, start_tls=True)
+    res = await aiosmtplib.send(message, **send_kws)
+    msg = "failed" if not re.search(r"\sOK\s", res[1]) else "succeeded"
+    print(f"SMS notification {msg}")
+    return res
 
 def send_email(
     sender_email: str,
@@ -28,7 +59,6 @@ def send_email(
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
-        
         if password is None:
             password = os.environ.get("GMAIL_APP_PASSWORD")
             if not password:
@@ -42,6 +72,7 @@ def send_email(
         
         server.login(sender_email, password)
         server.send_message(msg)
+        print("Email notification sent successfully")
         return True
         
     except Exception as e:
@@ -53,13 +84,36 @@ def send_email(
         except:
             pass
 
+async def send_reminder_notifications(
+    sender_email: str,
+    receiver_email: str,
+    phone_data: dict,
+    subject: str,
+    message: str
+):
+    # Send email
+    email_sent = send_email(sender_email, receiver_email, subject, message)
+    
+    # Send SMS if phone data is provided
+    if phone_data and phone_data.get('number') and phone_data.get('carrier'):
+        password = os.environ.get("GMAIL_APP_PASSWORD")
+        sms_message = f"{subject}\n\n{message}"  # Simplified message for SMS
+        await send_txt(
+            phone_data['number'],
+            phone_data['carrier'].lower(),
+            sender_email,
+            password,
+            sms_message,
+            subject
+        )
+
 def get_interval_seconds(interval, unit):
     unit_conversions = {
-        'minute(s)' : 60,
+        'minute(s)': 60,
         'hour(s)': 3600,
         'day(s)': 86400,
         'week(s)': 604800,
-        'month(s)': 2592000  #if month is 30 days
+        'month(s)': 2592000
     }
     return int(interval) * unit_conversions.get(unit, 60)
 
@@ -72,6 +126,7 @@ def set_reminder():
         reminder_date = data.get('reminderDate')
         reminder_time = data.get('reminderTime')
         repeat_data = data.get('repeat')
+        phone_data = data.get('phone_data')  # Expected format: {"number": "1234567890", "carrier": "verizon"}
         
         if not all([reminder_name, receiver_email, reminder_date, reminder_time]):
             return jsonify({
@@ -86,45 +141,45 @@ def set_reminder():
                 'message': 'Sender email not configured'
             }), 500
 
-        # Schedule the reminder
         datetime_str = f"{reminder_date} {reminder_time}"
         reminder_datetime = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
         
         message = f"""
-        What's poppin
+        Reminder Alert!
 
-        you MUST do this: {reminder_name}
-        You set this for {reminder_date} at {reminder_time}
-        This repeats every {repeat_data['interval']} {repeat_data['unit']}
+        Task: {reminder_name}
+        Scheduled for: {reminder_date} at {reminder_time}
+        {"This repeats every " + str(repeat_data['interval']) + " " + repeat_data['unit'] if repeat_data else "This is a one-time reminder"}
 
-        This was a message from Andrew's Bot
+        Sent by Reminder System
         """
 
         if repeat_data and repeat_data.get('interval') and repeat_data.get('unit'):
-            # Set up recurring reminder
             interval_seconds = get_interval_seconds(
                 repeat_data['interval'],
                 repeat_data['unit']
             )
             
             scheduler.add_job(
-                send_email,
+                lambda: asyncio.run(send_reminder_notifications(
+                    sender_email, receiver_email, phone_data,
+                    f"Reminder: {reminder_name}", message
+                )),
                 'interval',
                 seconds=interval_seconds,
-                start_date=reminder_datetime,
-                args=[sender_email, receiver_email, f"Reminder: {reminder_name}", message],
-                )
-            response_message = 'Success'
-        else:
-            # Set up one-time reminder
-            scheduler.add_job(
-                send_email,
-                'date',
-                run_date=reminder_datetime,
-                args=[sender_email, receiver_email, f"Reminder: {reminder_name}", message]
+                start_date=reminder_datetime
             )
-            
-            response_message = 'Successfully made'
+            response_message = 'Recurring reminder set successfully'
+        else:
+            scheduler.add_job(
+                lambda: asyncio.run(send_reminder_notifications(
+                    sender_email, receiver_email, phone_data,
+                    f"Reminder: {reminder_name}", message
+                )),
+                'date',
+                run_date=reminder_datetime
+            )
+            response_message = 'One-time reminder set successfully'
 
         return jsonify({
             'status': 'success',
