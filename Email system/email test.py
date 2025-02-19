@@ -36,13 +36,15 @@ carrier_list = {
 }
 
 async def send_txt(
-      num: Union[str, int], 
+    num: Union[str, int], 
     msg: str, 
     subj: str,
-    carrier: str = "verizon" 
+    carrier: str = "verizon",
+    email: Optional[str] = None,
+    pword: Optional[str] = None
 ) -> Tuple[dict, str]:
-    email = os.environ.get("SENDER_EMAIL")
-    pword = os.environ.get("phoneCode")
+    email = email or os.environ.get("SENDER_EMAIL")
+    pword = pword or os.environ.get("phoneCode")
     to_email = carrier_list.get(carrier.lower(), "vtext.com")
 
     message = EmailMessage()
@@ -62,19 +64,20 @@ async def send_txt(
 async def send_txts(
     nums: Collection[Union[str, int]], carrier: str, email: str, pword: str, msg: str, subj: str
 ) -> List[Tuple[dict, str]]:
-    tasks = [send_txt(n, carrier, email, pword, msg, subj) for n in set(nums)]
+    tasks = [send_txt(n, msg, subj, carrier, email, pword) for n in set(nums)]
     return await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
     _num = "7206269971"
-    _carrier = "verizon"
-    _email = os.environ.get("SENDER_EMAIL")
-    _pword = os.environ.get("phoneCode")
+    carrier: str = "verizon"
+    _carrier = carrier_list.get(carrier.lower(), "vtext.com")
+    attached = f"{_num}@{_carrier}"
     _msg = "rah rah ah ah ah"
     _subj = "Dummy subj"
-    coro = send_txt(_num, _carrier, _msg, _subj)
-    asyncio.run(coro)
+    
+    asyncio.run(send_txt(_num, _msg, _subj, attached ))
+
 
 def send_email(
     receiver_email: str,
@@ -112,8 +115,6 @@ def send_email(
             ))
         
         return True
-    
-        
         
     except Exception as e:
         print(f"Email error: {str(e)}")
