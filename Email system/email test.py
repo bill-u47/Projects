@@ -19,7 +19,7 @@ from typing import Collection, List, Tuple, Union
 month = ""
 app = Flask(__name__)
 CORS(app)
-__file__ = r"C:\Users\User\OneDrive - Regis Jesuit High School\Desktop\Projects\Email system\.env)"
+__file__ = r"C:\Users\User\Documents\GitHub\Projects\Email system\.env"
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 scheduler = BackgroundScheduler()
@@ -36,23 +36,26 @@ carrier_list = {
 }
 
 async def send_txt(
-    num: Union[str, int], carrier: str, email: str, pword: str, msg: str, subj: str
+      num: Union[str, int], 
+    msg: str, 
+    subj: str,
+    carrier: str = "verizon" 
 ) -> Tuple[dict, str]:
-    to_email = carrier_list[carrier]
+    email = os.environ.get("SENDER_EMAIL")
+    pword = os.environ.get("phoneCode")
+    to_email = carrier_list.get(carrier.lower(), "vtext.com")
 
-    # build message
     message = EmailMessage()
     message["From"] = email
     message["To"] = f"{num}@{to_email}"
     message["Subject"] = subj
     message.set_content(msg)
-    email = os.environ.get("SENDER_EMAIL")
-    pword = os.environ.get("phoneCode")
+
     HOST = 'smtp.gmail.com'
     send_kws = dict(username=email, password=pword, hostname=HOST, port=587, start_tls=True)
     res = await aiosmtplib.send(message, **send_kws) 
     msg = "failed" if not re.search(r"\sOK\s", res[1]) else "succeeded"
-    print(msg)
+    print(f"SMS notification {msg}")
     return res
 
 
@@ -70,23 +73,25 @@ if __name__ == "__main__":
     _pword = os.environ.get("phoneCode")
     _msg = "rah rah ah ah ah"
     _subj = "Dummy subj"
-    coro = send_txt(_num, _carrier, _email, _pword, _msg, _subj)
+    coro = send_txt(_num, _carrier, _msg, _subj)
     asyncio.run(coro)
 
 def send_email(
     receiver_email: str,
     subject: str,
     message: str,
-    password: Optional[str] = None,
-    sender_email = str(os.environ.get("SENDER_EMAIL"))
+    phone_number: Optional[str] = None
 ):
     try:
+        sender_email = os.environ.get("SENDER_EMAIL")
+        password = os.environ.get("phoneCode")
+        
+        if not all([sender_email, password]):
+            raise ValueError("Missing email credentials")
+
+        # Send email
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
-        if password is None:
-            password = os.environ.get("GMAIL_APP_PASSWORD")
-            if not password:
-                raise ValueError("No password provided and GMAIL_APP_PASSWORD not found in environment variables")
         
         msg = MIMEMultipart()
         msg['From'] = sender_email
@@ -96,7 +101,19 @@ def send_email(
         
         server.login(sender_email, password)
         server.send_message(msg)
+        print("Email sent successfully")
+
+        # Send SMS if phone number provided
+        if phone_number:
+            asyncio.run(send_txt(
+                num=phone_number,
+                msg=message,
+                subj=subject
+            ))
+        
         return True
+    
+        
         
     except Exception as e:
         print(f"Email error: {str(e)}")
@@ -167,7 +184,7 @@ def set_reminder():
                 'interval',
                 seconds=interval_seconds,
                 start_date=reminder_datetime,
-                args=[sender_email, receiver_email, phoneNum_data, f"Reminder: {reminder_name}", message]
+                args=[receiver_email, f"Reminder: {reminder_name}", message, phoneNum_data]
             )
             response_message = 'Success'
         else:
