@@ -2,6 +2,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
+
 def read_csv_files(blue_file, red_file):
     try:
         blue_data = pd.read_csv(blue_file)
@@ -139,6 +140,7 @@ def calculate_total_weighted_score(team_number, team_stats, subjective_weights):
     except Exception as e:
         print(f"Error calculating total score for team {team_number}: {e}")
         return 0
+        
 def calculate_subjective_score(team_number, team_stats, subjective_weights):
     """
     Calculate a score based on subjective weights and match performance
