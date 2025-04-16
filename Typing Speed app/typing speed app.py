@@ -38,9 +38,8 @@ with open("typing_tests.txt", "r") as file:
 def check_correct():
     l = 0
     wrong_counter = 0
-    if len(user_letters - letters) != 0:
-        wrong_counter +- sum(user_letters - letters)
-        
+    if range(max(len(user_letters)) != max(len(letters))):
+        wrong_counter +- int(max(len(user_letters)) - (max(len(letters))))
     for l in range(len(user_letters)):
         if user_input:
             if user_letters[l] != letters[l]:
