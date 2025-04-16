@@ -36,10 +36,10 @@ with open("typing_tests.txt", "r") as file:
         print("Time's up!")
 
 def check_correct():
+    overflow_counter = ""
     l = 0
     wrong_counter = 0
-    if range(max(len(user_letters)) != max(len(letters))):
-        wrong_counter +- int(max(len(user_letters)) - (max(len(letters))))
+    overflow_counter = abs(len(user_letters) - len(letters))
     for l in range(len(user_letters)):
         if user_input:
             if user_letters[l] != letters[l]:
@@ -49,7 +49,7 @@ def check_correct():
             
         else:
             print("You didn't type anything!")
-    print(f"You got {wrong_counter} letters wrong!")
+    print(f"You got {wrong_counter} letters wrong and had {overflow_counter} letters .")
 
    
 
