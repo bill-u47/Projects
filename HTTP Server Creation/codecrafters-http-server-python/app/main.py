@@ -1,42 +1,63 @@
-import socket  # noqa: F401
+import socket
+import threading
 import re
 from urllib.parse import urlparse
 
-connection_count = 0
+def handle_connection(conn):
+    msg = conn.recv(1024).decode("ascii")
+    if not msg.strip():
+        conn.close()
+        return
+        
+    # Match request line (GET, POST, etc.)
+    m = re.match(r"^(?:GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+(\S+)", msg)
+    if not m:
+        conn.send(b"HTTP/1.1 400 Bad Request\r\n\r\n")
+        conn.close()
+        return
+        
+    url = m.group(1)
+        
+        # Extract User-Agent header
+    user_agent = None
+    for line in msg.split("\r\n"):
+        if line.lower().startswith("user-agent:"):
+            user_agent = line[len("User-Agent:"):].strip()
+
+        # Handle /user-agent request
+    if url == "/user-agent" and user_agent is not None:
+        body = user_agent
+        count = len(body)
+        UAresponse = (
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/plain\r\n"
+            f"Content-Length: {count}\r\n"
+            "\r\n"
+            f"{body}"
+        )
+        conn.send(UAresponse.encode("ascii"))
+
+        # Handle /echo/{text} request
+    elif url.startswith("/echo/"):
+        path = urlparse(url).path
+        echo_part = path.replace('/echo/', '')
+        body = echo_part
+        count = len(body)
+        response = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length: {count}\r\n" "\r\n"f"{body}")
+        conn.send(response.encode("ascii"))
+    else:
+        conn.send(b"HTTP/1.1 404 Not Found\r\n\r\n")
+    
+   
+    conn.close()
 
 def main():
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)    
-    print("Logs from your program will appear here!")
-    while True:  
-        conn, _ = server_socket.accept()  # wait for client
-        msg = conn.recv(1024).decode("ascii")
-        m = re.match(r"^(?:GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+(\S+)", msg)
-        url = m.group(1)
-        ##
+    server_socket = socket.create_server(("localhost", 4221),reuse_port=True)
+    print("Server is listening on http://localhost:4221")
 
-        user_agent = None #for the header
-        for line in msg.split("\r\n"):
-            lowered_line = line.lower()
-            if lowered_line.startswith("user-agent"):
-                user_agent = line[len("User-Agent:"):].strip()
-                
-        if url == "/user-agent" and user_agent is not None:
-            body = user_agent
-            count = len(body)
-            UAresponse = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length: {count}\r\n" "\r\n" f"{user_agent}")
-            conn.send(UAresponse.encode("ascii"))
-        elif "/echo/" in url and "/user-agent" not in url:
-            path = urlparse(url).path  
-            echo_part = path.replace('/echo/', '')  
-            body = echo_part
-            count = len(body)
-            response = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length: {count}\r\n" "\r\n" f"{body}")
-            conn.send(response.encode("ascii"))
-        else:
-            conn.send(b"HTTP/1.1 404 Not Found\r\n\r\n")
-        
-        conn.close()
+    while True:
+        conn, _ = server_socket.accept()
+        threading.Thread(target=handle_connection, args=(conn,)).start()
 
 if __name__ == "__main__":
     main()
-
