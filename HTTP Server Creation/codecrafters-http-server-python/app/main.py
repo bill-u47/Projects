@@ -45,6 +45,8 @@ def handle_connection(conn):
         count = len(body)
         response = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length: {count}\r\n" "\r\n"f"{body}")
         conn.send(response.encode("ascii"))
+    elif url == "/":
+        conn.send(b"HTTP/1.1 200 OK\r\n\r\n")
     else:
         conn.send(b"HTTP/1.1 404 Not Found\r\n\r\n")
     
@@ -52,11 +54,12 @@ def handle_connection(conn):
     conn.close()
 
 def main():
-    server_socket = socket.create_server(("localhost", 4221),reuse_port=True)
+    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
     print("Server is listening on http://localhost:4221")
 
     while True:
         conn, _ = server_socket.accept()
+        # Handle each connection in a new thread to allow multiple concurrent connections
         threading.Thread(target=handle_connection, args=(conn,)).start()
 
 if __name__ == "__main__":
