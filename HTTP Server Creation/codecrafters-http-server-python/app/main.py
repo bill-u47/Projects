@@ -3,6 +3,12 @@ import threading
 import re
 from urllib.parse import urlparse
 
+
+#ok this is the version without the reuse socket because python is stupid and doesn't want to support it
+#to run this, use terminal in the same folder and just do python3 main.py
+#then you can execute commands using git bash
+
+
 def handle_connection(conn):
     msg = conn.recv(1024).decode("ascii")
     if not msg.strip():
@@ -54,7 +60,7 @@ def handle_connection(conn):
     conn.close()
 
 def main():
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+    server_socket = socket.create_server(("localhost", 4221))
     print("Server is listening on http://localhost:4221")
 
     while True:
