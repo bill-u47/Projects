@@ -5,10 +5,9 @@ from urllib.parse import urlparse
 connection_count = 0
 
 def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
+    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)    
     print("Logs from your program will appear here!")
-    while True:
-        server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+    while True:  
         conn, _ = server_socket.accept()  # wait for client
         msg = conn.recv(1024).decode("ascii")
         m = re.match(r"^(?:GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+(\S+)", msg)
@@ -40,9 +39,7 @@ def main():
         else:
             conn.send(b"HTTP/1.1 404 Not Found\r\n\r\n")
         
-
-        server_socket.accept() # wait for client
-
+        conn.close()
 
 if __name__ == "__main__":
     main()
