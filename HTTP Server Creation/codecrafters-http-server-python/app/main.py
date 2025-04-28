@@ -23,19 +23,15 @@ def main():
         if url == "/user-agent" and user_agent is not None:
             body = user_agent
             count = len(body)
-            UAresponse = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length:{count}\r\n" "\r\n" f"{user_agent}")
+            UAresponse = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length: {count}\r\n" "\r\n" f"{user_agent}")
             conn.send(UAresponse.encode("ascii"))
-
-
-        if "/echo/" in url:
+        elif "/echo/" in url and "/user-agent" not in url:
             path = urlparse(url).path  
             echo_part = path.replace('/echo/', '')  
             body = echo_part
             count = len(body)
             response = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length: {count}\r\n" "\r\n" f"{body}")
             conn.send(response.encode("ascii"))
-        elif url == "/":
-            conn.send(b"HTTP/1.1 200 OK\r\n\r\n")
         else:
             conn.send(b"HTTP/1.1 404 Not Found\r\n\r\n")
         
