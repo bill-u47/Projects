@@ -1,29 +1,49 @@
 import socket  # noqa: F401
 import re
+from urllib.parse import urlparse
+
+connection_count = 0
 
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-    
-    conn, _ = server_socket.accept()  # wait for client
-    msg = conn.recv(1024).decode("ascii")
-    # extract request url with regex
-    m = re.match(r"^(?:GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+(\S+)", msg)
-    url = m.group(1)
-    if url == "/echo/{str}":
-        conn.send(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nabc")
-    elif url == "/":
-        conn.send(b"HTTP/1.1 200 OK\r\n\r\n")
-    else:
-        conn.send(b"HTTP/1.1 404 Not Found\r\n\r\n")
-   
+    while True:
+        server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+        conn, _ = server_socket.accept()  # wait for client
+        msg = conn.recv(1024).decode("ascii")
+        m = re.match(r"^(?:GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+(\S+)", msg)
+        url = m.group(1)
+        ##
 
-    server_socket.accept() # wait for client
+        user_agent = None #for the header
+        for line in msg.split("\r\n"):
+            lowered_line = line.lower()
+            if lowered_line.startswith("user-agent"):
+                user_agent = line[len("User-Agent:"):].strip()
+                
+        if url == "/user-agent" and user_agent is not None:
+            body = user_agent
+            count = len(body)
+            UAresponse = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length:{count}\r\n" "\r\n" f"{user_agent}")
+            conn.send(UAresponse.encode("ascii"))
+
+
+        if "/echo/" in url:
+            path = urlparse(url).path  
+            echo_part = path.replace('/echo/', '')  
+            body = echo_part
+            count = len(body)
+            response = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length: {count}\r\n" "\r\n" f"{body}")
+            conn.send(response.encode("ascii"))
+        elif url == "/":
+            conn.send(b"HTTP/1.1 200 OK\r\n\r\n")
+        else:
+            conn.send(b"HTTP/1.1 404 Not Found\r\n\r\n")
+        
+
+        server_socket.accept() # wait for client
 
 
 if __name__ == "__main__":
     main()
 
-
-test test
