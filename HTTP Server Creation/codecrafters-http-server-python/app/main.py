@@ -2,6 +2,7 @@ import socket
 import threading
 import re
 from urllib.parse import urlparse
+import os
 
 
 #ok this is the version without the reuse socket because python is stupid and doesn't want to support it
@@ -30,18 +31,23 @@ def handle_connection(conn):
         if line.lower().startswith("user-agent:"):
             user_agent = line[len("User-Agent:"):].strip()
 
-        # Handle /user-agent request
+      # Handle /user-agent request
     if url == "/user-agent" and user_agent is not None:
         body = user_agent
         count = len(body)
-        UAresponse = (
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/plain\r\n"
-            f"Content-Length: {count}\r\n"
-            "\r\n"
-            f"{body}"
-        )
+        UAresponse = ("HTTP/1.1 200 OK\r\n" "Content-Type: text/plain\r\n" f"Content-Length: {count}\r\n" "\r\n" f"{body}")
+
+
         conn.send(UAresponse.encode("ascii"))
+    elif url.startswith("/files/"):
+        file_path = urlparse(url).path
+        file_name = file_path.replace('/files/', '')
+        with open(file_name, "rb") as f:
+            file_contents = f.read()
+            file_size = os.path.getsize(file_path)
+
+            file_response = ("HTTP/1.1 200 OK\r\n" "Content-Type: application/octet-stream\r\n" f"Content-Length: {file_size}\r\n\r\n" f"{file_contents}")
+            conn.send(file_response.encode("ascii"))        
 
         # Handle /echo/{text} request
     elif url.startswith("/echo/"):
