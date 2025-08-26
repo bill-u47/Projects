@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import Tesseract from 'tesseract.js';
 import { extractCalendarAssignments } from '../utils/calendarExtractor';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
-import 'pdfjs-dist/build/pdf.worker.entry';
+import { GlobalWorkerOptions } from 'pdfjs-dist/build/pdf';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker';
+
+// Set the worker
+GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 function ImageUpload({ onCalendarExtracted }) {
   const [loading, setLoading] = useState(false);
