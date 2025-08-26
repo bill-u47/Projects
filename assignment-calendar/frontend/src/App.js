@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ImageUpload from './components/ImageUpload';
+import ImageUpload from './components/imageupload';
 import AssignmentTable from './components/AssignmentTable';
 import GoogleCalendarButton from './components/GoogleCalendarButton';
 import { parseAssignments } from './utils/assignmentParser';
