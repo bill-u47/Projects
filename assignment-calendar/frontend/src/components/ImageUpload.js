@@ -2,11 +2,9 @@ import React, { useState } from 'react';
 import Tesseract from 'tesseract.js';
 import { extractCalendarAssignments } from '../utils/calendarExtractor';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
-import { GlobalWorkerOptions } from 'pdfjs-dist/build/pdf';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker';
 
-// Set the worker
-GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// Set the PDF.js worker to use CDN (works in Create React App and most setups)
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 function ImageUpload({ onCalendarExtracted }) {
   const [loading, setLoading] = useState(false);
