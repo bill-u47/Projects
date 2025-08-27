@@ -3,29 +3,28 @@ import Tesseract from 'tesseract.js';
 import { extractCalendarAssignments } from '../utils/calendarExtractor';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 
-// Set the PDF.js worker to use CDN (works in Create React App and most setups)
+// Set PDF.js worker using CDN for compatibility
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-function ImageUpload({ onCalendarExtracted }) {
+function ImageUpload({ onOcrComplete, onCalendarExtracted }) {
   const [loading, setLoading] = useState(false);
 
-  // Helper to OCR an image
+  // OCR helper
   const ocrImage = async (imgDataUrl) => {
     const { data: { text } } = await Tesseract.recognize(imgDataUrl, 'eng', { logger: m => {} });
+    console.log("OCR TEXT:", text); // Debug
     return text;
   };
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setLoading(true);
 
     try {
       let fullText = '';
 
       if (file.type === "application/pdf") {
-        // PDF: process all pages
         const reader = new FileReader();
         reader.onload = async function () {
           const typedarray = new Uint8Array(this.result);
@@ -42,21 +41,32 @@ function ImageUpload({ onCalendarExtracted }) {
             fullText += await ocrImage(imgDataUrl) + '\n';
           }
           setLoading(false);
+          console.log("PDF OCR TEXT:", fullText); // Debug
           const calendar = extractCalendarAssignments(fullText);
-          onCalendarExtracted(calendar);
+          console.log("EXTRACTED ASSIGNMENTS:", calendar); // Debug
+          if (calendar.length && onCalendarExtracted) {
+            onCalendarExtracted(calendar);
+          } else if (onOcrComplete) {
+            onOcrComplete(fullText);
+          }
         };
         reader.readAsArrayBuffer(file);
         return;
       }
 
       if (file.type.startsWith('image/')) {
-        // Image
         const reader = new FileReader();
         reader.onload = async function () {
           fullText = await ocrImage(reader.result);
           setLoading(false);
+          console.log("Image OCR TEXT:", fullText); // Debug
           const calendar = extractCalendarAssignments(fullText);
-          onCalendarExtracted(calendar);
+          console.log("EXTRACTED ASSIGNMENTS:", calendar); // Debug
+          if (calendar.length && onCalendarExtracted) {
+            onCalendarExtracted(calendar);
+          } else if (onOcrComplete) {
+            onOcrComplete(fullText);
+          }
         };
         reader.readAsDataURL(file);
         return;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ImageUpload from './components/imageupload'; // Use the improved version!
+import ImageUpload from './components/imageupload';
 import AssignmentTable from './components/AssignmentTable';
 import GoogleCalendarButton from './components/GoogleCalendarButton';
 import { parseAssignments } from './utils/assignmentParser';
@@ -16,9 +16,9 @@ function App() {
     setAssignments(extracted);
   };
 
-  // Used for enhanced calendar extraction
+  // Used for calendar extraction
   const handleCalendarExtracted = (calendar) => {
-    setOcrText(''); // No raw text shown if we have structured data
+    setOcrText(''); // Only show structured data
     setAssignments(
       calendar.map(entry => ({
         dueDate: entry.date,
@@ -55,6 +55,13 @@ function App() {
         />
       )}
       {success && <p style={{ color: 'green' }}>Events added to your Google Calendar!</p>}
+      {/* DEBUG: Show OCR text if nothing extracted */}
+      {!assignments.length && ocrText && (
+        <div>
+          <h3>OCR Raw Text</h3>
+          <pre style={{whiteSpace: 'pre-wrap'}}>{ocrText}</pre>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,33 +1,17 @@
-// Example regex for your schedule format. Tweak as needed!
+// A simple fallback parser for OCR text
 export function parseAssignments(text) {
-  const lines = text.split('\n');
-  const assignments = [];
-  const datePattern = /([A-Za-z]+ \d{1,2})/; // e.g., September 29
-  const hwPattern = /(HW: [A-Z ,]+|Worksheet: [A-Z, ]+|Midterm \d|Final Exam|Comp Test)/i;
-
-  let currentDate = null;
-  for (const line of lines) {
-    const dateMatch = datePattern.exec(line);
+  // Example: split by line, look for "due" or date patterns
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const results = [];
+  lines.forEach(line => {
+    // Example: look for MM/DD or Month DD
+    const dateMatch = line.match(/(\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b|\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}\b)/);
     if (dateMatch) {
-      currentDate = dateMatch[0];
-      continue; // skip to next line for assignments
-    }
-
-    const hwMatch = hwPattern.exec(line);
-    if (hwMatch && currentDate) {
-      // Try to parse date to yyyy-mm-dd:
-      let date = new Date(`${currentDate}, 2025`);
-      if (!isNaN(date)) {
-        date = date.toISOString().slice(0, 10);
-      } else {
-        date = '';
-      }
-      assignments.push({
-        name: hwMatch[0],
-        date,
-        notes: ''
+      results.push({
+        dueDate: dateMatch[0],
+        description: line.replace(dateMatch[0], '').trim(),
       });
     }
-  }
-  return assignments;
+  });
+  return results;
 }
