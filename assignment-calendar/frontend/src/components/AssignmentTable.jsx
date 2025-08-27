@@ -10,15 +10,15 @@ export default function AssignmentTable({ assignments, onEdit }) {
 
   if (!assignments || assignments.length === 0) {
     return (
-      <div>
+      <div style={{ marginTop: 32 }}>
         <h2>Assignments</h2>
-        <div>No assignments detected. Try uploading a different file.</div>
+        <div>No assignments detected. Upload a clearer calendar image or edit manually.</div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div style={{ marginTop: 32 }}>
       <h2>Assignments</h2>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
@@ -29,33 +29,39 @@ export default function AssignmentTable({ assignments, onEdit }) {
           </tr>
         </thead>
         <tbody>
-          {assignments.map((a, idx) => (
-            <tr key={idx}>
-              <td style={{ border: "1px solid black" }}>
-                <input
-                  value={a.name}
-                  onChange={e => handleChange(idx, "name", e.target.value)}
-                  style={{ width: "95%" }}
-                />
-              </td>
-              <td style={{ border: "1px solid black" }}>
-                <input
-                  type="date"
-                  value={a.date}
-                  onChange={e => handleChange(idx, "date", e.target.value)}
-                  style={{ width: "95%" }}
-                />
-              </td>
-              <td style={{ border: "1px solid black" }}>
-                <input
-                  value={a.notes || ""}
-                  placeholder="Notes"
-                  onChange={e => handleChange(idx, "notes", e.target.value)}
-                  style={{ width: "95%" }}
-                />
-              </td>
-            </tr>
-          ))}
+          {assignments.map((a, idx) => {
+            const key = `${a.name}-${a.date}-${idx}`;
+            return (
+              <tr key={key}>
+                <td style={{ border: "1px solid black" }}>
+                  <input
+                    aria-label="Assignment Name"
+                    value={a.name}
+                    onChange={e => handleChange(idx, "name", e.target.value)}
+                    style={{ width: "95%" }}
+                  />
+                </td>
+                <td style={{ border: "1px solid black" }}>
+                  <input
+                    aria-label="Assignment Date"
+                    type="date"
+                    value={a.date || ""}
+                    onChange={e => handleChange(idx, "date", e.target.value)}
+                    style={{ width: "95%" }}
+                  />
+                </td>
+                <td style={{ border: "1px solid black" }}>
+                  <input
+                    aria-label="Assignment Notes"
+                    value={a.notes || ""}
+                    placeholder="Notes"
+                    onChange={e => handleChange(idx, "notes", e.target.value)}
+                    style={{ width: "95%" }}
+                  />
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
