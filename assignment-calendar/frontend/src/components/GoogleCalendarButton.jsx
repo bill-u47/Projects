@@ -25,7 +25,6 @@ function GoogleCalendarButton({ assignments, onSuccess }) {
       setLoading(false);
     }
   };
-
   // 2. Exchange code for tokens
   const handleCodeSubmit = async () => {
     setLoading(true);
@@ -62,6 +61,7 @@ function GoogleCalendarButton({ assignments, onSuccess }) {
       setError('Failed to add events to Google Calendar.');
     } finally {
       setLoading(false);
+      setError('Assignments successfully added!')
     }
   };
 
