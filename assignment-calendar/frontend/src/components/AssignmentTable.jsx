@@ -25,6 +25,7 @@ export default function AssignmentTable({ assignments, onEdit }) {
           <tr>
             <th style={{ border: "1px solid black" }}>Assignment Name</th>
             <th style={{ border: "1px solid black" }}>Date</th>
+            <th style={{ border: "1px solid black" }}>Time</th>
             <th style={{ border: "1px solid black" }}>Additional Notes</th>
           </tr>
         </thead>
@@ -47,6 +48,15 @@ export default function AssignmentTable({ assignments, onEdit }) {
                     type="date"
                     value={a.date || ""}
                     onChange={e => handleChange(idx, "date", e.target.value)}
+                    style={{ width: "95%" }}
+                  />
+                </td>
+                <td style={{ border: "1px solid black" }}>
+                  <input
+                    aria-label="Assignment Time"
+                    type="time"
+                    value={a.time || ""}
+                    onChange={e => handleChange(idx, "time", e.target.value)}
                     style={{ width: "95%" }}
                   />
                 </td>
