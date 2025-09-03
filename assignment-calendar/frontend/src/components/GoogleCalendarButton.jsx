@@ -30,11 +30,13 @@ function GoogleCalendarButton({ assignments, onSuccess }) {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post(`${BACKEND}/auth/google/tokens`, { code });
+      const res = await axios.post(`${BACKEND}/auth/google/token`, { code });
+      console.log(code)
       setAccessToken(res.data.access_token); // Store the access token for next step
       setStep(2);
     } catch (err) {
       setError('Invalid code or failed to get tokens.');
+      console.log({code}, err);
     } finally {
       setLoading(false);
     }
