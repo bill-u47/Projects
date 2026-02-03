@@ -22,24 +22,39 @@ C:
 @echo on
 
 winsat formal
-pause
 
 wmic diskdrive get model,status
+
+@echo off
+echo Start DISM checks?
 pause
+echo.
+echo.
+
+echo ---- Starting DISM Checks ----
+@echo on
 
 DISM /Online /Cleanup-Image /CheckHealth
-pause
 
 DISM /Online /Cleanup-Image /ScanHealth
-pause
 
 DISM /Online /Cleanup-Image /RestoreHealth
+
+@echo off
+echo Start SFC Checks?
 pause
+echo.
+echo.
+
+echo ---- Starting SFC Checks ----
+@echo on
 
 sfc /verifyonly
-pause
 
 SFC /SCANNOW
+
+Your setup is done.
+@echo off
 pause
 
 
